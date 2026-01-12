@@ -21,8 +21,7 @@ struct UrgencyBarView: View {
                 RoundedRectangle(cornerRadius: 6)
                     .fill(isPaid ? Color.gray.opacity(0.35) : u.color.opacity(0.95))
                     .frame(width: max(0, width * u.progress), height: 12)
-
-                // ✅ days label overlay
+                    
                 labelView
                     .frame(height: 12)
             }

@@ -7,9 +7,9 @@ struct PaymentsPopoverView: View {
 
     @State private var isQuickAddExpanded: Bool = false
     @State private var quickTitle: String = ""
-    @State private var quickAmountText: String = ""          // ✅ empty by default (no “0”)
+    @State private var quickAmountText: String = ""
     @State private var quickDueDate: Date = Date()
-    @State private var quickRepeatMonthly: Bool = false      // ✅ default false
+    @State private var quickRepeatMonthly: Bool = false
 
     private enum QuickField: Hashable { case title, amount }
     @FocusState private var quickFocus: QuickField?
@@ -134,9 +134,9 @@ struct PaymentsPopoverView: View {
 
         // reset
         quickTitle = ""
-        quickAmountText = ""          // ✅ stays empty, no “0”
+        quickAmountText = ""
         quickDueDate = Date()
-        quickRepeatMonthly = false    // ✅ default false
+        quickRepeatMonthly = false
 
         DispatchQueue.main.async { quickFocus = .title }
     }
@@ -204,8 +204,8 @@ struct PaymentsPopoverView: View {
             ignoreHidePaid ? true : !(store.hidePaid && occ.isPaid)
         }
         .sorted { a, b in
-            if a.isPaid != b.isPaid { return !a.isPaid }   // ✅ unpaid first
-            return a.dueDate < b.dueDate                   // ✅ then by due date
+            if a.isPaid != b.isPaid { return !a.isPaid }
+            return a.dueDate < b.dueDate
         }
 
         return all

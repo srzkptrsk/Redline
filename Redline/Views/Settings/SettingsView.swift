@@ -78,7 +78,7 @@ struct SettingsView: View {
         store.templates.sorted { a, b in
             let da = sortDate(for: a)
             let db = sortDate(for: b)
-            if da != db { return da > db } // ✅ newest (later date) first
+            if da != db { return da > db }
             return a.title.localizedCaseInsensitiveCompare(b.title) == .orderedAscending
         }
     }
