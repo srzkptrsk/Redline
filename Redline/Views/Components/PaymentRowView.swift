@@ -18,27 +18,23 @@ struct PaymentRowView: View {
                 Text(occ.template.title)
                     .lineLimit(1)
 
-                Text("\(formatAmount(occ.template.amount)) \(occ.template.currency) • due \(formatDate(occ.dueDate))")
+                Text(subtitleText)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
             Spacer()
 
-            UrgencyBar(dueDate: occ.dueDate, isPaid: occ.isPaid)
+            UrgencyBarView(dueDate: occ.dueDate, isPaid: occ.isPaid)
                 .frame(width: 110)
         }
         .padding(.vertical, 6)
     }
 
-    private func formatAmount(_ value: Decimal) -> String {
-        let ns = value as NSDecimalNumber
-        return ns.stringValue
-    }
-
-    private func formatDate(_ date: Date) -> String {
-        let f = DateFormatter()
-        f.dateFormat = "d MMM"
-        return f.string(from: date)
+    private var subtitleText: String {
+        let amount = (occ.template.amount as NSDecimalNumber)
+        let amountStr = AppFormatters.amount.string(from: amount) ?? amount.stringValue
+        let dateStr = AppFormatters.shortDate.string(from: occ.dueDate)
+        return "\(amountStr) \(CurrencyDisplay.short(occ.template.currency)) • due \(dateStr)"
     }
 }
