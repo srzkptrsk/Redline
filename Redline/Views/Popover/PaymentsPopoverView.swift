@@ -14,6 +14,19 @@ struct PaymentsPopoverView: View {
     private enum QuickField: Hashable { case title, amount }
     @FocusState private var quickFocus: QuickField?
 
+    // MARK: - Bring to front
+
+    private func bringAppToFront() {
+        DispatchQueue.main.async {
+            NSApp.activate(ignoringOtherApps: true)
+
+            // MenuBarExtra window is still an NSWindow; bring any visible windows forward.
+            for w in NSApp.windows where w.isVisible {
+                w.makeKeyAndOrderFront(nil)
+            }
+        }
+    }
+
     // MARK: - Body
 
     var body: some View {
@@ -39,6 +52,15 @@ struct PaymentsPopoverView: View {
         }
         .padding(14)
         .frame(width: 420, height: 560)
+        .onAppear {
+            bringAppToFront()
+        }
+        .onChange(of: isQuickAddExpanded) { _, expanded in
+            if expanded {
+                bringAppToFront()
+                DispatchQueue.main.async { quickFocus = .title }
+            }
+        }
     }
 
     // MARK: - Header
@@ -64,40 +86,65 @@ struct PaymentsPopoverView: View {
     // MARK: - Quick Add
 
     private var quickAddSection: some View {
-        DisclosureGroup("Quick Add", isExpanded: $isQuickAddExpanded) {
-            VStack(alignment: .leading, spacing: 10) {
-                TextField("Title", text: $quickTitle)
-                    .focused($quickFocus, equals: .title)
-                    .onSubmit { quickFocus = .amount }
+        VStack(alignment: .leading, spacing: 8) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    isQuickAddExpanded.toggle()
+                }
+                if isQuickAddExpanded {
+                    bringAppToFront()
+                    DispatchQueue.main.async { quickFocus = .title }
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "chevron.right")
+                        .rotationEffect(.degrees(isQuickAddExpanded ? 90 : 0))
+                        .animation(.easeInOut(duration: 0.15), value: isQuickAddExpanded)
 
-                HStack(spacing: 10) {
-                    TextField("Amount", text: $quickAmountText)
-                        .focused($quickFocus, equals: .amount)
-                        .frame(width: 140)
-                        .onChange(of: quickFocus) { _, newValue in
-                            // ✅ When entering Amount, clear any standing "0"
-                            guard newValue == .amount else { return }
-                            let cleaned = normalizeAmountText(quickAmountText)
-                            if cleaned == "0" || cleaned == "0.0" || cleaned == "0.00" {
-                                quickAmountText = ""
-                            }
-                        }
-                        .onSubmit { addQuickPayment() }
-
-                    DatePicker("Due", selection: $quickDueDate, displayedComponents: [.date])
-                        .datePickerStyle(.compact)
-                        .labelsHidden()
+                    Text("Quick Add")
+                        .font(.headline)
 
                     Spacer()
-
-                    Button("Add") { addQuickPayment() }
-                        .disabled(!canQuickAdd)
                 }
-
-                Toggle("Repeat monthly", isOn: $quickRepeatMonthly)
-                    .toggleStyle(.switch)
+                .contentShape(Rectangle())
             }
-            .padding(.top, 8)
+            .buttonStyle(.plain)
+
+            if isQuickAddExpanded {
+                VStack(alignment: .leading, spacing: 10) {
+                    TextField("Title", text: $quickTitle)
+                        .focused($quickFocus, equals: .title)
+                        .onSubmit { quickFocus = .amount }
+
+                    HStack(spacing: 10) {
+                        TextField("Amount", text: $quickAmountText)
+                            .focused($quickFocus, equals: .amount)
+                            .frame(width: 140)
+                            .onChange(of: quickFocus) { _, newValue in
+                                guard newValue == .amount else { return }
+                                let cleaned = normalizeAmountText(quickAmountText)
+                                if cleaned == "0" || cleaned == "0.0" || cleaned == "0.00" {
+                                    quickAmountText = ""
+                                }
+                            }
+                            .onSubmit { addQuickPayment() }
+
+                        DatePicker("Due", selection: $quickDueDate, displayedComponents: [.date])
+                            .datePickerStyle(.compact)
+                            .labelsHidden()
+
+                        Spacer()
+
+                        Button("Add") { addQuickPayment() }
+                            .disabled(!canQuickAdd)
+                    }
+
+                    Toggle("Repeat monthly", isOn: $quickRepeatMonthly)
+                        .toggleStyle(.switch)
+                }
+                .padding(.leading, 22)
+                .padding(.top, 4)
+            }
         }
     }
 
@@ -240,10 +287,10 @@ struct PaymentsPopoverView: View {
                 .font(.caption)
 
                 Spacer()
-                
+
                 Toggle("Hide paid", isOn: $store.hidePaid)
                     .toggleStyle(.switch)
-                
+
                 Spacer()
 
                 Text("Redline")
