@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PaymentsPopoverView: View {
     @EnvironmentObject var store: PaymentsStore
+    @Environment(\.openSettings) private var openSettingsAction
 
     // MARK: - Quick Add state
 
@@ -281,8 +282,19 @@ struct PaymentsPopoverView: View {
     private var footer: some View {
         VStack(spacing: 10) {
             HStack {
-                SettingsLink {
-                    Text("Bills")
+                Button {
+                    UserDefaults.standard.set(0, forKey: "selectedSettingsTab")
+                    openSettings()
+                } label: {
+                    Label("Bills", systemImage: "creditcard")
+                }
+                .font(.caption)
+                
+                Button {
+                    UserDefaults.standard.set(1, forKey: "selectedSettingsTab")
+                    openSettings()
+                } label: {
+                    Label("Settings", systemImage: "gear")
                 }
                 .font(.caption)
 
@@ -298,5 +310,9 @@ struct PaymentsPopoverView: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+    
+    private func openSettings() {
+        openSettingsAction()
     }
 }
