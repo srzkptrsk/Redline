@@ -6,7 +6,7 @@ struct RedlineApp: App {
     @AppStorage("selectedSettingsTab") private var selectedTab: Int = 0
 
     var body: some Scene {
-        MenuBarExtra("Redline", systemImage: "calendar.badge.clock") {
+        MenuBarExtra("Redline", systemImage: store.hasUrgentBills ? "calendar.badge.exclamationmark" : "calendar.badge.clock") {
             PaymentsPopoverView()
                 .environmentObject(store)
                 .frame(width: 420, height: 560)
