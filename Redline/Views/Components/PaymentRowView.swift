@@ -25,7 +25,7 @@ struct PaymentRowView: View {
 
             Spacer()
 
-            UrgencyBarView(dueDate: occ.dueDate, isPaid: occ.isPaid)
+            UrgencyBarView(dueDate: occ.dueDate, isPaid: occ.isPaid, currentDay: store.currentDay)
                 .frame(width: 110)
         }
         .padding(.vertical, 6)

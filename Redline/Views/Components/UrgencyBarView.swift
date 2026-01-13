@@ -7,6 +7,11 @@ struct UrgencyBarView: View {
     let isPaid: Bool
     var windowDays: Double = 30
     var labelPlacement: LabelPlacement = .center
+    
+    /// Pass the store's `currentDay` here to trigger re-render at midnight.
+    /// This creates an explicit SwiftUI dependency on the current day.
+    var currentDay: Date? = nil
+
 
     var body: some View {
         GeometryReader { geo in
