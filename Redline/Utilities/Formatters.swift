@@ -1,11 +1,11 @@
 import Foundation
 
 enum AppFormatters {
-    /// Modern Decimal format style for amounts (Polish locale)
+    /// Modern Decimal format style for amounts (Polish locale, always 2 decimal places)
     static func formatAmount(_ value: Decimal) -> String {
         value.formatted(
             .number
-                .precision(.fractionLength(0...2))
+                .precision(.fractionLength(2))
                 .locale(Locale(identifier: "pl_PL"))
         )
     }
