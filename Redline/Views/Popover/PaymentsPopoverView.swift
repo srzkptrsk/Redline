@@ -273,8 +273,7 @@ struct PaymentsPopoverView: View {
     }
 
     private func formatMoney(_ value: Decimal) -> String {
-        let ns = NSDecimalNumber(decimal: value)
-        return AppFormatters.amount.string(from: ns) ?? ns.stringValue
+        AppFormatters.formatAmount(value)
     }
 
     // MARK: - Footer
@@ -286,7 +285,7 @@ struct PaymentsPopoverView: View {
                     UserDefaults.standard.set(0, forKey: "selectedSettingsTab")
                     openSettings()
                 } label: {
-                    Label("Bills", systemImage: "creditcard")
+                    Label("Bills", systemImage: "calendar.badge.clock")
                 }
                 .font(.caption)
                 
@@ -305,7 +304,7 @@ struct PaymentsPopoverView: View {
 
                 Spacer()
 
-                Text("Redline")
+                Text("Redline \(appVersion)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -314,5 +313,9 @@ struct PaymentsPopoverView: View {
     
     private func openSettings() {
         openSettingsAction()
+    }
+    
+    private var appVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
     }
 }

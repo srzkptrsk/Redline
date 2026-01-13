@@ -32,9 +32,8 @@ struct PaymentRowView: View {
     }
 
     private var subtitleText: String {
-        let amount = (occ.template.amount as NSDecimalNumber)
-        let amountStr = AppFormatters.amount.string(from: amount) ?? amount.stringValue
-        let dateStr = AppFormatters.shortDate.string(from: occ.dueDate)
+        let amountStr = AppFormatters.formatAmount(occ.template.amount)
+        let dateStr = AppFormatters.formatShortDate(occ.dueDate)
         return "\(amountStr) \(CurrencyDisplay.short(occ.template.currency)) • due \(dateStr)"
     }
 }

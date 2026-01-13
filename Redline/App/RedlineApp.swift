@@ -17,7 +17,7 @@ struct RedlineApp: App {
             TabView(selection: $selectedTab) {
                 BillsView()
                     .tabItem {
-                        Label("Bills", systemImage: "creditcard")
+                        Label("Bills", systemImage: "calendar.badge.clock")
                     }
                     .tag(0)
                 

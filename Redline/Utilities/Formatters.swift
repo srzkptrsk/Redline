@@ -1,21 +1,19 @@
 import Foundation
 
 enum AppFormatters {
-    static let amount: NumberFormatter = {
-        let f = NumberFormatter()
-        f.numberStyle = .decimal
-        f.maximumFractionDigits = 2
-        f.minimumFractionDigits = 0
-        f.locale = Locale(identifier: "pl_PL")
-        f.generatesDecimalNumbers = true
-        return f
-    }()
-
-    static let shortDate: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "d MMM"
-        return f
-    }()
+    /// Modern Decimal format style for amounts (Polish locale)
+    static func formatAmount(_ value: Decimal) -> String {
+        value.formatted(
+            .number
+                .precision(.fractionLength(0...2))
+                .locale(Locale(identifier: "pl_PL"))
+        )
+    }
+    
+    /// Modern Date format style for short dates like "14 Jan"
+    static func formatShortDate(_ date: Date) -> String {
+        date.formatted(.dateTime.day().month(.abbreviated))
+    }
 }
 
 enum CurrencyDisplay {

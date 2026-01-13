@@ -91,7 +91,7 @@ struct BillsView: View {
                 TextField("Title", text: $title)
 
                 HStack(spacing: 10) {
-                    TextField("Amount", value: $amountValue, formatter: AppFormatters.amount)
+                    TextField("Amount", value: $amountValue, format: .number.precision(.fractionLength(0...2)))
                         .frame(width: 160)
 
                     TextField("Currency", text: $currency)
@@ -201,8 +201,7 @@ struct BillsView: View {
     }
 
     private func templateSubtitle(_ tmpl: PaymentTemplate) -> String {
-        let amount = NSDecimalNumber(decimal: tmpl.amount)
-        let amountStr = AppFormatters.amount.string(from: amount) ?? amount.stringValue
+        let amountStr = AppFormatters.formatAmount(tmpl.amount)
 
         let dueStr: String
         switch tmpl.recurrence {
@@ -211,7 +210,7 @@ struct BillsView: View {
             dueStr = "monthly, day \(d)"
         case .once:
             let date = tmpl.dueDate ?? Date()
-            dueStr = "once, \(AppFormatters.shortDate.string(from: date))"
+            dueStr = "once, \(AppFormatters.formatShortDate(date))"
         }
 
         return "\(amountStr) \(CurrencyDisplay.short(tmpl.currency)) • \(dueStr)"
@@ -239,7 +238,7 @@ struct EditPaymentSheet: View {
         self.onDelete = onDelete
 
         _title = State(initialValue: template.title)
-        _amountValue = State(initialValue: NSDecimalNumber(decimal: template.amount).doubleValue)
+        _amountValue = State(initialValue: (template.amount as NSNumber).doubleValue)
         _currency = State(initialValue: template.currency)
 
         if template.recurrence == .once, let d = template.dueDate {
@@ -265,7 +264,7 @@ struct EditPaymentSheet: View {
                     TextField("Title", text: $title)
 
                     HStack(spacing: 10) {
-                        TextField("Amount", value: $amountValue, formatter: AppFormatters.amount)
+                        TextField("Amount", value: $amountValue, format: .number.precision(.fractionLength(0...2)))
                             .frame(width: 160)
 
                         TextField("Currency", text: $currency)
