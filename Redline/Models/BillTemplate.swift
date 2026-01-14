@@ -1,7 +1,7 @@
 import SwiftUI
 import Foundation
 
-struct PaymentTemplate: Identifiable, Codable, Hashable {
+struct BillTemplate: Identifiable, Codable, Hashable {
     enum Recurrence: String, Codable { case monthly, once }
 
     var id: UUID = UUID()

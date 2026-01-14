@@ -1,8 +1,8 @@
 import SwiftUI
 
-struct PaymentRowView: View {
-    @EnvironmentObject var store: PaymentsStore
-    let occ: PaymentOccurrence
+struct BillRowView: View {
+    @EnvironmentObject var store: BillsStore
+    let occ: BillOccurrence
 
     var body: some View {
         HStack(spacing: 10) {

@@ -1,7 +1,7 @@
 import SwiftUI
 
-struct PaymentsPopoverView: View {
-    @EnvironmentObject var store: PaymentsStore
+struct BillsPopoverView: View {
+    @EnvironmentObject var store: BillsStore
     @Environment(\.openSettings) private var openSettingsAction
 
     // MARK: - Quick Add state
@@ -21,7 +21,6 @@ struct PaymentsPopoverView: View {
         DispatchQueue.main.async {
             NSApp.activate(ignoringOtherApps: true)
 
-            // MenuBarExtra window is still an NSWindow; bring any visible windows forward.
             for w in NSApp.windows where w.isVisible {
                 w.makeKeyAndOrderFront(nil)
             }
@@ -128,7 +127,7 @@ struct PaymentsPopoverView: View {
                                     quickAmountText = ""
                                 }
                             }
-                            .onSubmit { addQuickPayment() }
+                            .onSubmit { addQuickBill() }
 
                         DatePicker("Due", selection: $quickDueDate, displayedComponents: [.date])
                             .datePickerStyle(.compact)
@@ -136,7 +135,7 @@ struct PaymentsPopoverView: View {
 
                         Spacer()
 
-                        Button("Add") { addQuickPayment() }
+                        Button("Add") { addQuickBill() }
                             .disabled(!canQuickAdd)
                     }
 
@@ -154,7 +153,7 @@ struct PaymentsPopoverView: View {
         return !t.isEmpty && (parseAmount(quickAmountText) ?? 0) > 0
     }
 
-    private func addQuickPayment() {
+    private func addQuickBill() {
         let title = quickTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty else { return }
         guard let amount = parseAmount(quickAmountText), amount > 0 else { return }
@@ -202,7 +201,7 @@ struct PaymentsPopoverView: View {
         return Decimal(string: normalized)
     }
 
-    // MARK: - Months list (amount summary + sorting unpaid first)
+    // MARK: - Months list
 
     private func monthSection(title: String, monthDate: Date) -> some View {
         let all = buildOccurrences(forMonth: monthDate, ignoreHidePaid: true)
@@ -220,32 +219,32 @@ struct PaymentsPopoverView: View {
                 Text("No items").foregroundStyle(.secondary)
             } else {
                 ForEach(visible) { occ in
-                    PaymentRowView(occ: occ)
+                    BillRowView(occ: occ)
                 }
             }
         }
     }
 
-    private func buildOccurrences(forMonth date: Date, ignoreHidePaid: Bool) -> [PaymentOccurrence] {
+    private func buildOccurrences(forMonth date: Date, ignoreHidePaid: Bool) -> [BillOccurrence] {
         let cal = Calendar.app
         let comps = cal.dateComponents([.year, .month], from: date)
         let year = comps.year ?? 1970
         let month = comps.month ?? 1
         let monthKey = date.monthKey(calendar: cal)
 
-        let all = store.templates.compactMap { tmpl -> PaymentOccurrence? in
+        let all = store.templates.compactMap { tmpl -> BillOccurrence? in
             switch tmpl.recurrence {
             case .monthly:
                 let day = tmpl.dueDay ?? 1
                 guard let due = cal.makeClampedDate(year: year, month: month, day: day) else { return nil }
                 let paid = store.isPaid(templateId: tmpl.id, monthKey: monthKey)
-                return PaymentOccurrence(template: tmpl, monthKey: monthKey, dueDate: due, isPaid: paid)
+                return BillOccurrence(template: tmpl, monthKey: monthKey, dueDate: due, isPaid: paid)
 
             case .once:
                 guard let exact = tmpl.dueDate else { return nil }
                 guard exact.monthKey(calendar: cal) == monthKey else { return nil }
                 let paid = store.isPaid(templateId: tmpl.id, monthKey: monthKey)
-                return PaymentOccurrence(template: tmpl, monthKey: monthKey, dueDate: exact, isPaid: paid)
+                return BillOccurrence(template: tmpl, monthKey: monthKey, dueDate: exact, isPaid: paid)
             }
         }
         .filter { occ in
@@ -259,7 +258,7 @@ struct PaymentsPopoverView: View {
         return all
     }
 
-    private func totalsForMonth(occurrences: [PaymentOccurrence]) -> (paid: Decimal, total: Decimal, currency: String) {
+    private func totalsForMonth(occurrences: [BillOccurrence]) -> (paid: Decimal, total: Decimal, currency: String) {
         let currency = occurrences.first?.template.currency ?? "PLN"
         var total: Decimal = 0
         var paid: Decimal = 0

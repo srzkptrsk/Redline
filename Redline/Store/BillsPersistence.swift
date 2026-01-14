@@ -1,18 +1,18 @@
 import Foundation
 
-struct PaymentsPersistence {
+struct BillsPersistence {
     struct Persisted: Codable {
-        var templates: [PaymentTemplate]
-        var statuses: [PaymentMonthStatus]
+        var templates: [BillTemplate]
+        var statuses: [BillMonthStatus]
         
         // Backwards compatibility: ignore settings fields from old JSON
         init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
-            templates = try container.decode([PaymentTemplate].self, forKey: .templates)
-            statuses = try container.decode([PaymentMonthStatus].self, forKey: .statuses)
+            templates = try container.decode([BillTemplate].self, forKey: .templates)
+            statuses = try container.decode([BillMonthStatus].self, forKey: .statuses)
         }
         
-        init(templates: [PaymentTemplate], statuses: [PaymentMonthStatus]) {
+        init(templates: [BillTemplate], statuses: [BillMonthStatus]) {
             self.templates = templates
             self.statuses = statuses
         }
@@ -22,7 +22,8 @@ struct PaymentsPersistence {
         }
     }
     
-    private let fileName = "payments.json"
+    private let fileName = "bills.json"
+    private let legacyFileName = "payments.json"
     
     private var directoryName: String {
         Bundle.main.bundleIdentifier ?? "Redline"
@@ -40,23 +41,38 @@ struct PaymentsPersistence {
         directoryURL.appendingPathComponent(fileName)
     }
     
+    private var legacyFileURL: URL {
+        directoryURL.appendingPathComponent(legacyFileName)
+    }
+    
     func load() -> Persisted? {
-        print("[PaymentsPersistence] Loading from: \(fileURL.path)")
-        guard let data = try? Data(contentsOf: fileURL) else {
-            print("[PaymentsPersistence] No data file found")
-            return nil
+        print("[BillsPersistence] Loading from: \(fileURL.path)")
+        
+        // Try new file first
+        if let data = try? Data(contentsOf: fileURL) {
+            return decodeData(data)
         }
         
+        // Fallback to legacy payments.json
+        print("[BillsPersistence] Trying legacy file: \(legacyFileURL.path)")
+        if let data = try? Data(contentsOf: legacyFileURL) {
+            return decodeData(data)
+        }
+        
+        print("[BillsPersistence] No data file found")
+        return nil
+    }
+    
+    private func decodeData(_ data: Data) -> Persisted? {
         do {
             let result = try JSONDecoder().decode(Persisted.self, from: data)
-            print("[PaymentsPersistence] Loaded \(result.templates.count) templates")
+            print("[BillsPersistence] Loaded \(result.templates.count) templates")
             return result
         } catch {
-            print("[PaymentsPersistence] Decode error: \(error)")
-            // Create backup of corrupted/legacy file for recovery
-            let backupURL = directoryURL.appendingPathComponent("payments.legacy.json")
+            print("[BillsPersistence] Decode error: \(error)")
+            let backupURL = directoryURL.appendingPathComponent("bills.legacy.json")
             try? data.write(to: backupURL, options: [.atomic])
-            print("[PaymentsPersistence] Legacy backup saved to: \(backupURL.path)")
+            print("[BillsPersistence] Legacy backup saved to: \(backupURL.path)")
             return nil
         }
     }
@@ -64,22 +80,19 @@ struct PaymentsPersistence {
     func save(_ payload: Persisted, retentionDays: Int) {
         let fm = FileManager.default
         
-        // Create daily backup with date in filename
         createDailyBackup(fm: fm)
-        
-        // Cleanup old backups
         cleanupOldBackups(fm: fm, retentionDays: retentionDays)
         
         guard let data = try? JSONEncoder().encode(payload) else {
-            print("[PaymentsPersistence] Failed to encode payload")
+            print("[BillsPersistence] Failed to encode payload")
             return
         }
         
         do {
             try data.write(to: fileURL, options: [.atomic])
-            print("[PaymentsPersistence] Saved \(payload.templates.count) templates")
+            print("[BillsPersistence] Saved \(payload.templates.count) templates")
         } catch {
-            print("[PaymentsPersistence] Save error: \(error)")
+            print("[BillsPersistence] Save error: \(error)")
         }
     }
     
@@ -90,13 +103,12 @@ struct PaymentsPersistence {
         dateFormatter.dateFormat = "yyyy-MM-dd"
         let dateString = dateFormatter.string(from: Date())
         
-        let backupName = "payments.\(dateString).json"
+        let backupName = "bills.\(dateString).json"
         let backupURL = directoryURL.appendingPathComponent(backupName)
         
-        // Only create backup if it doesn't exist for today
         if !fm.fileExists(atPath: backupURL.path) {
             try? fm.copyItem(at: fileURL, to: backupURL)
-            print("[PaymentsPersistence] Daily backup created: \(backupName)")
+            print("[BillsPersistence] Daily backup created: \(backupName)")
         }
     }
     
@@ -115,21 +127,19 @@ struct PaymentsPersistence {
             for file in files {
                 let name = file.lastPathComponent
                 
-                // Match pattern: payments.YYYY-MM-DD.json
-                guard name.hasPrefix("payments.") && name.hasSuffix(".json") && name != "payments.json" && name != "payments.legacy.json" else {
+                guard name.hasPrefix("bills.") && name.hasSuffix(".json") && name != "bills.json" && name != "bills.legacy.json" else {
                     continue
                 }
                 
-                // Extract date from filename
-                let dateString = name.replacingOccurrences(of: "payments.", with: "").replacingOccurrences(of: ".json", with: "")
+                let dateString = name.replacingOccurrences(of: "bills.", with: "").replacingOccurrences(of: ".json", with: "")
                 
                 if let backupDate = dateFormatter.date(from: dateString), backupDate < cutoffDate {
                     try fm.removeItem(at: file)
-                    print("[PaymentsPersistence] Removed old backup: \(name)")
+                    print("[BillsPersistence] Removed old backup: \(name)")
                 }
             }
         } catch {
-            print("[PaymentsPersistence] Cleanup error: \(error)")
+            print("[BillsPersistence] Cleanup error: \(error)")
         }
     }
 }

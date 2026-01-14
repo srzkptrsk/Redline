@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @EnvironmentObject var store: PaymentsStore
+    @EnvironmentObject var store: BillsStore
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {

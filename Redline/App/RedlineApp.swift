@@ -2,12 +2,12 @@ import SwiftUI
 
 @main
 struct RedlineApp: App {
-    @StateObject private var store = PaymentsStore()
+    @StateObject private var store = BillsStore()
     @AppStorage("selectedSettingsTab") private var selectedTab: Int = 0
 
     var body: some Scene {
         MenuBarExtra("Redline", systemImage: store.hasUrgentBills ? "calendar.badge.exclamationmark" : "calendar.badge.clock") {
-            PaymentsPopoverView()
+            BillsPopoverView()
                 .environmentObject(store)
                 .frame(width: 420, height: 560)
         }
@@ -32,4 +32,3 @@ struct RedlineApp: App {
         }
     }
 }
-

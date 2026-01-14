@@ -2,10 +2,10 @@ import Foundation
 import Combine
 
 @MainActor
-final class PaymentsStore: ObservableObject {
-    // Payment data
-    @Published var templates: [PaymentTemplate] = []
-    @Published var statuses: [PaymentMonthStatus] = []
+final class BillsStore: ObservableObject {
+    // Bill data
+    @Published var templates: [BillTemplate] = []
+    @Published var statuses: [BillMonthStatus] = []
     
     // Settings
     @Published var hidePaid: Bool = false
@@ -55,7 +55,7 @@ final class PaymentsStore: ObservableObject {
         return false
     }
 
-    private let paymentsPersistence = PaymentsPersistence()
+    private let billsPersistence = BillsPersistence()
     private let settingsPersistence = SettingsPersistence()
     private var cancellables: Set<AnyCancellable> = []
     private var isBootstrapping = true
@@ -65,12 +65,12 @@ final class PaymentsStore: ObservableObject {
         load()
         setupDayChangeObserver()
 
-        // Auto-save payments on change (debounced)
+        // Auto-save bills on change (debounced)
         Publishers.CombineLatest($templates, $statuses)
             .debounce(for: .milliseconds(250), scheduler: DispatchQueue.main)
             .sink { [weak self] _ in
                 guard let self, !self.isBootstrapping else { return }
-                self.savePayments()
+                self.saveBills()
             }
             .store(in: &cancellables)
         
@@ -136,19 +136,19 @@ final class PaymentsStore: ObservableObject {
         alertDays = settings.alertDays
         backupRetentionDays = settings.backupRetentionDays
         
-        // Load payments
-        if let decoded = paymentsPersistence.load() {
+        // Load bills
+        if let decoded = billsPersistence.load() {
             templates = decoded.templates
             statuses = decoded.statuses
         }
     }
 
-    func savePayments() {
-        let payload = PaymentsPersistence.Persisted(
+    func saveBills() {
+        let payload = BillsPersistence.Persisted(
             templates: templates,
             statuses: statuses
         )
-        paymentsPersistence.save(payload, retentionDays: backupRetentionDays)
+        billsPersistence.save(payload, retentionDays: backupRetentionDays)
     }
     
     func saveSettings() {
@@ -161,8 +161,8 @@ final class PaymentsStore: ObservableObject {
     }
 }
 
-extension PaymentsStore {
-    func updateTemplate(_ updated: PaymentTemplate) {
+extension BillsStore {
+    func updateTemplate(_ updated: BillTemplate) {
         if let idx = templates.firstIndex(where: { $0.id == updated.id }) {
             templates[idx] = updated
         }

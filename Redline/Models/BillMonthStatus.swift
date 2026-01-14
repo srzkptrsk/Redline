@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct PaymentMonthStatus: Identifiable, Codable, Hashable {
+struct BillMonthStatus: Identifiable, Codable, Hashable {
     var id: UUID = UUID()
     var monthKey: String // "YYYY-MM"
     var templateId: UUID

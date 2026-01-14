@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct BillsView: View {
-    @EnvironmentObject var store: PaymentsStore
+    @EnvironmentObject var store: BillsStore
 
     // Add form state
     @State private var title: String = ""
@@ -11,7 +11,7 @@ struct BillsView: View {
     @State private var currency: String = "PLN"
 
     // Edit
-    @State private var editing: PaymentTemplate? = nil
+    @State private var editing: BillTemplate? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -25,7 +25,7 @@ struct BillsView: View {
         }
         .padding(16)
         .sheet(item: $editing) { tmpl in
-            EditPaymentSheet(template: tmpl) { updated in
+            EditBillSheet(template: tmpl) { updated in
                 store.updateTemplate(updated)
             } onDelete: { id in
                 store.deleteTemplate(id: id)
@@ -36,10 +36,7 @@ struct BillsView: View {
 
     // MARK: - Sorting
 
-    /// Returns a "next due date" for sorting:
-    /// - once: exact dueDate
-    /// - monthly: next occurrence (this month if day not passed; otherwise next month)
-    private func sortDate(for tmpl: PaymentTemplate) -> Date {
+    private func sortDate(for tmpl: BillTemplate) -> Date {
         let cal = Calendar.app
         let now = Date()
 
@@ -53,15 +50,12 @@ struct BillsView: View {
             let year = comps.year ?? 1970
             let month = comps.month ?? 1
 
-            // try this month
             if let thisMonth = cal.makeClampedDate(year: year, month: month, day: day) {
-                // if it's still ahead (or today), use it; otherwise use next month
                 if thisMonth >= startOfDay(now) {
                     return thisMonth
                 }
             }
 
-            // next month
             let next = cal.date(byAdding: .month, value: 1, to: now) ?? now
             let ny = cal.component(.year, from: next)
             let nm = cal.component(.month, from: next)
@@ -73,8 +67,7 @@ struct BillsView: View {
         Calendar.app.startOfDay(for: date)
     }
 
-    /// Newest first (so old entries go to the bottom)
-    private var sortedTemplatesNewestFirst: [PaymentTemplate] {
+    private var sortedTemplatesNewestFirst: [BillTemplate] {
         store.templates.sorted { a, b in
             let da = sortDate(for: a)
             let db = sortDate(for: b)
@@ -103,7 +96,7 @@ struct BillsView: View {
 
                     Spacer()
 
-                    Button("Add") { addPayment() }
+                    Button("Add") { addBill() }
                         .disabled(!canAdd)
                 }
 
@@ -120,7 +113,7 @@ struct BillsView: View {
         && !currency.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    private func addPayment() {
+    private func addBill() {
         let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
         let cur = currency.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !t.isEmpty, amountValue > 0, !cur.isEmpty else { return }
@@ -200,7 +193,7 @@ struct BillsView: View {
         }
     }
 
-    private func templateSubtitle(_ tmpl: PaymentTemplate) -> String {
+    private func templateSubtitle(_ tmpl: BillTemplate) -> String {
         let amountStr = AppFormatters.formatAmount(tmpl.amount)
 
         let dueStr: String
@@ -219,11 +212,11 @@ struct BillsView: View {
 
 // MARK: - Edit Sheet
 
-struct EditPaymentSheet: View {
+struct EditBillSheet: View {
     @Environment(\.dismiss) private var dismiss
 
-    let template: PaymentTemplate
-    let onSave: (PaymentTemplate) -> Void
+    let template: BillTemplate
+    let onSave: (BillTemplate) -> Void
     let onDelete: (UUID) -> Void
 
     @State private var title: String
@@ -232,7 +225,7 @@ struct EditPaymentSheet: View {
     @State private var dueDate: Date
     @State private var repeatMonthly: Bool
 
-    init(template: PaymentTemplate, onSave: @escaping (PaymentTemplate) -> Void, onDelete: @escaping (UUID) -> Void) {
+    init(template: BillTemplate, onSave: @escaping (BillTemplate) -> Void, onDelete: @escaping (UUID) -> Void) {
         self.template = template
         self.onSave = onSave
         self.onDelete = onDelete
@@ -314,7 +307,7 @@ struct EditPaymentSheet: View {
         && !currency.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    private func buildUpdatedTemplate() -> PaymentTemplate {
+    private func buildUpdatedTemplate() -> BillTemplate {
         let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
         let cur = currency.trimmingCharacters(in: .whitespacesAndNewlines)
 
