@@ -6,10 +6,12 @@ struct RedlineApp: App {
     @AppStorage("selectedSettingsTab") private var selectedTab: Int = 0
 
     var body: some Scene {
-        MenuBarExtra("Redline", systemImage: store.hasUrgentBills ? "calendar.badge.exclamationmark" : "calendar.badge.clock") {
+        MenuBarExtra {
             BillsPopoverView()
                 .environmentObject(store)
                 .frame(width: 420, height: 560)
+        } label: {
+            menuBarLabel
         }
         .menuBarExtraStyle(.window)
 
@@ -29,6 +31,17 @@ struct RedlineApp: App {
             }
             .environmentObject(store)
             .frame(width: 640, height: 520)
+        }
+    }
+    
+    @ViewBuilder
+    private var menuBarLabel: some View {
+        if store.hasUrgentBills {
+            Image(systemName: "calendar.badge.exclamationmark")
+                .symbolRenderingMode(.palette)
+                .foregroundStyle(.orange, .primary)
+        } else {
+            Image(systemName: "calendar.badge.clock")
         }
     }
 }

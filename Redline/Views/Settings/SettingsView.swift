@@ -42,7 +42,20 @@ struct SettingsView: View {
             }
             
             Spacer()
+            
+            HStack {
+                Spacer()
+                Text("Redline \(appVersion)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding(16)
+    }
+    
+    private var appVersion: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"
+        return "\(version) (\(build))"
     }
 }

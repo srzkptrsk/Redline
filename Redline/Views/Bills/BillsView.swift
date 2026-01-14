@@ -1,11 +1,12 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct BillsView: View {
     @EnvironmentObject var store: BillsStore
 
     // Add form state
     @State private var title: String = ""
-    @State private var amountValue: Double = 0
+    @State private var amountText: String = ""
     @State private var dueDate: Date = Date()
     @State private var repeatMonthly: Bool = false
     @State private var currency: String = "PLN"
@@ -15,7 +16,18 @@ struct BillsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Bills").font(.title).bold()
+            HStack {
+                Text("Bills").font(.title).bold()
+                
+                Spacer()
+                
+                Button {
+                    exportToCSV()
+                } label: {
+                    Label("Export CSV", systemImage: "square.and.arrow.up")
+                }
+                .disabled(store.templates.isEmpty)
+            }
 
             addSection
 
@@ -84,7 +96,7 @@ struct BillsView: View {
                 TextField("Title", text: $title)
 
                 HStack(spacing: 10) {
-                    TextField("Amount", value: $amountValue, format: .number.precision(.fractionLength(0...2)))
+                    TextField("Amount", text: $amountText)
                         .frame(width: 160)
 
                     TextField("Currency", text: $currency)
@@ -109,20 +121,28 @@ struct BillsView: View {
 
     private var canAdd: Bool {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        && amountValue > 0
+        && parseDecimal(amountText) != nil && parseDecimal(amountText)! > 0
         && !currency.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+    
+    private func parseDecimal(_ text: String) -> Decimal? {
+        let normalized = text
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: ",", with: ".")
+            .replacingOccurrences(of: " ", with: "")
+        return Decimal(string: normalized)
     }
 
     private func addBill() {
         let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
         let cur = currency.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !t.isEmpty, amountValue > 0, !cur.isEmpty else { return }
+        guard !t.isEmpty, let amount = parseDecimal(amountText), amount > 0, !cur.isEmpty else { return }
 
         if repeatMonthly {
             let day = Calendar.app.component(.day, from: dueDate)
             store.templates.append(.init(
                 title: t,
-                amount: Decimal(amountValue),
+                amount: amount,
                 currency: cur,
                 dueDay: day,
                 dueDate: nil,
@@ -131,7 +151,7 @@ struct BillsView: View {
         } else {
             store.templates.append(.init(
                 title: t,
-                amount: Decimal(amountValue),
+                amount: amount,
                 currency: cur,
                 dueDay: nil,
                 dueDate: dueDate,
@@ -141,7 +161,7 @@ struct BillsView: View {
 
         // reset
         title = ""
-        amountValue = 0
+        amountText = ""
         dueDate = Date()
         repeatMonthly = false
         currency = "PLN"
@@ -208,6 +228,59 @@ struct BillsView: View {
 
         return "\(amountStr) \(CurrencyDisplay.short(tmpl.currency)) • \(dueStr)"
     }
+    
+    // MARK: - CSV Export
+    
+    private func exportToCSV() {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        
+        let currentMonthKey = Date().monthKey(calendar: Calendar.app)
+        
+        // Using semicolon as delimiter (European format with comma decimals)
+        var csv = "Title;Amount;Currency;Recurrence;Due Day;Due Date;Paid This Month;Paid At\n"
+        
+        for tmpl in store.templates {
+            let title = escapeCSV(tmpl.title)
+            // Use comma as decimal separator
+            let amount = "\(tmpl.amount)".replacingOccurrences(of: ".", with: ",")
+            let currency = tmpl.currency
+            let recurrence = tmpl.recurrence.rawValue
+            let dueDay = tmpl.dueDay.map { String($0) } ?? ""
+            let dueDate = tmpl.dueDate.map { dateFormatter.string(from: $0) } ?? ""
+            
+            // Get payment status for current month
+            let status = store.statuses.first { $0.templateId == tmpl.id && $0.monthKey == currentMonthKey }
+            let isPaid = status?.isPaid == true ? "Yes" : "No"
+            let paidAt = status?.paidAt.map { dateFormatter.string(from: $0) } ?? ""
+            
+            csv += "\(title);\(amount);\(currency);\(recurrence);\(dueDay);\(dueDate);\(isPaid);\(paidAt)\n"
+        }
+        
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.commaSeparatedText]
+        panel.nameFieldStringValue = "bills.csv"
+        panel.title = "Export Bills"
+        panel.message = "Choose where to save the CSV file"
+        
+        panel.begin { response in
+            guard response == .OK, let url = panel.url else { return }
+            
+            do {
+                try csv.write(to: url, atomically: true, encoding: .utf8)
+                print("[BillsView] Exported \(store.templates.count) bills to: \(url.path)")
+            } catch {
+                print("[BillsView] Export error: \(error)")
+            }
+        }
+    }
+    
+    private func escapeCSV(_ value: String) -> String {
+        if value.contains(",") || value.contains("\"") || value.contains("\n") {
+            return "\"\(value.replacingOccurrences(of: "\"", with: "\"\""))\""
+        }
+        return value
+    }
 }
 
 // MARK: - Edit Sheet
@@ -220,7 +293,7 @@ struct EditBillSheet: View {
     let onDelete: (UUID) -> Void
 
     @State private var title: String
-    @State private var amountValue: Double
+    @State private var amountText: String
     @State private var currency: String
     @State private var dueDate: Date
     @State private var repeatMonthly: Bool
@@ -231,7 +304,7 @@ struct EditBillSheet: View {
         self.onDelete = onDelete
 
         _title = State(initialValue: template.title)
-        _amountValue = State(initialValue: (template.amount as NSNumber).doubleValue)
+        _amountText = State(initialValue: "\(template.amount)")
         _currency = State(initialValue: template.currency)
 
         if template.recurrence == .once, let d = template.dueDate {
@@ -257,7 +330,7 @@ struct EditBillSheet: View {
                     TextField("Title", text: $title)
 
                     HStack(spacing: 10) {
-                        TextField("Amount", value: $amountValue, format: .number.precision(.fractionLength(0...2)))
+                        TextField("Amount", text: $amountText)
                             .frame(width: 160)
 
                         TextField("Currency", text: $currency)
@@ -303,8 +376,16 @@ struct EditBillSheet: View {
 
     private var canSave: Bool {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        && amountValue > 0
+        && parseDecimal(amountText) != nil && parseDecimal(amountText)! > 0
         && !currency.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+    
+    private func parseDecimal(_ text: String) -> Decimal? {
+        let normalized = text
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: ",", with: ".")
+            .replacingOccurrences(of: " ", with: "")
+        return Decimal(string: normalized)
     }
 
     private func buildUpdatedTemplate() -> BillTemplate {
@@ -313,7 +394,7 @@ struct EditBillSheet: View {
 
         var updated = template
         updated.title = t
-        updated.amount = Decimal(amountValue)
+        updated.amount = parseDecimal(amountText) ?? template.amount
         updated.currency = cur
 
         if repeatMonthly {

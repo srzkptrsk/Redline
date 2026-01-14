@@ -278,45 +278,31 @@ struct BillsPopoverView: View {
     // MARK: - Footer
 
     private var footer: some View {
-        VStack(spacing: 10) {
-            HStack {
-                Button {
-                    UserDefaults.standard.set(0, forKey: "selectedSettingsTab")
-                    openSettings()
-                } label: {
-                    Label("Bills", systemImage: "calendar.badge.clock")
-                }
-                .font(.caption)
-                
-                Button {
-                    UserDefaults.standard.set(1, forKey: "selectedSettingsTab")
-                    openSettings()
-                } label: {
-                    Label("Settings", systemImage: "gear")
-                }
-                .font(.caption)
-
-                Spacer()
-
-                Toggle("Hide paid", isOn: $store.hidePaid)
-                    .toggleStyle(.switch)
-
-                Spacer()
-
-                Text("Redline \(appVersion)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+        HStack {
+            Button {
+                UserDefaults.standard.set(0, forKey: "selectedSettingsTab")
+                openSettings()
+            } label: {
+                Label("Bills", systemImage: "calendar.badge.clock")
             }
+            .font(.caption)
+            
+            Button {
+                UserDefaults.standard.set(1, forKey: "selectedSettingsTab")
+                openSettings()
+            } label: {
+                Label("Settings", systemImage: "gear")
+            }
+            .font(.caption)
+
+            Spacer()
+
+            Toggle("Hide paid", isOn: $store.hidePaid)
+                .toggleStyle(.switch)
         }
     }
     
     private func openSettings() {
         openSettingsAction()
-    }
-    
-    private var appVersion: String {
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
-        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"
-        return "\(version) (\(build))"
     }
 }
