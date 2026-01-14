@@ -23,3 +23,16 @@ Redline is a native macOS Menu Bar application designed to simplify bill trackin
 2. **Mark as Paid**: Click the checkbox next to any bill in the list.
 3. **Configure Alerts**: Go to **Settings** to choose how many days in advance you want to be alerted (default is 3 days).
 4. **Manage**: Use the "Bills" window to edit or delete existing templates.
+
+## 📸 Screenshots
+
+<table align="center">
+  <tr>
+    <td align="center"><img src="https://github.com/user-attachments/assets/fd92ac0f-a228-485c-8df7-19e99d1b6522" width="100%" /></td>
+    <td align="center"><img src="https://github.com/user-attachments/assets/373fa0a1-993e-49d0-9f05-449b262dee61" width="100%" /></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="https://github.com/user-attachments/assets/6c4f349a-005c-4c28-8528-588e25640784" width="100%" /></td>
+    <td align="center"><img src="https://github.com/user-attachments/assets/4c453a73-7fd6-463d-a40c-3ed3b31922a2" width="100%" /></td>
+  </tr>
+</table>
