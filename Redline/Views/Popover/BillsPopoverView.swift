@@ -216,7 +216,12 @@ struct BillsPopoverView: View {
             Text(titleWithAmounts).font(.headline)
 
             if visible.isEmpty {
-                Text("No items").foregroundStyle(.secondary)
+                if all.isEmpty {
+                    Text("No items").foregroundStyle(.secondary)
+                } else {
+                    Text("No bills in this month. \(all.count) bills are paid.")
+                        .foregroundStyle(.secondary)
+                }
             } else {
                 ForEach(visible) { occ in
                     BillRowView(occ: occ)
