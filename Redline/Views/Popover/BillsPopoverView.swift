@@ -288,7 +288,7 @@ struct BillsPopoverView: View {
                 UserDefaults.standard.set(0, forKey: "selectedSettingsTab")
                 openSettings()
             } label: {
-                Label("Bills", systemImage: "calendar.badge.clock")
+                Label("Bills", systemImage: "polishzlotysign.arrow.trianglehead.counterclockwise.rotate.90")
             }
             .font(.caption)
             

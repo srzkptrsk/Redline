@@ -4,7 +4,7 @@ import SwiftUI
 struct RedlineApp: App {
     @StateObject private var store = BillsStore()
     @AppStorage("selectedSettingsTab") private var selectedTab: Int = 0
-
+    
     var body: some Scene {
         MenuBarExtra {
             BillsPopoverView()
@@ -14,12 +14,12 @@ struct RedlineApp: App {
             menuBarLabel
         }
         .menuBarExtraStyle(.window)
-
+        
         Settings {
             TabView(selection: $selectedTab) {
                 BillsView()
                     .tabItem {
-                        Label("Bills", systemImage: "calendar.badge.clock")
+                        Label("Bills", systemImage: "polishzlotysign.arrow.trianglehead.counterclockwise.rotate.90")
                     }
                     .tag(0)
                 
@@ -34,51 +34,59 @@ struct RedlineApp: App {
         }
     }
     
+    // MARK: - Menu Bar Label
+    
     @ViewBuilder
     private var menuBarLabel: some View {
-        if let icon = generateIcon(urgent: store.hasUrgentBills) {
+        if let icon = createMenuBarIcon() {
             Image(nsImage: icon)
         } else {
-            Image(systemName: "calendar")
+            // Fallback to system image
+            Image(systemName: "polishzlotysign.arrow.trianglehead.counterclockwise.rotate.90")
+                .foregroundColor(store.hasUrgentBills ? .red : .primary)
         }
     }
     
-    private func generateIcon(urgent: Bool) -> NSImage? {
-        let config = NSImage.SymbolConfiguration(textStyle: .body, scale: .large)
-        guard let baseImage = NSImage(systemSymbolName: "calendar", accessibilityDescription: nil)?.withSymbolConfiguration(config) else {
+    // MARK: - Icon Generation
+    
+    private func createMenuBarIcon() -> NSImage? {
+        let symbolName = "polishzlotysign.arrow.trianglehead.counterclockwise.rotate.90"
+        
+        // Use hierarchical rendering for two-tone coloring
+        if store.hasUrgentBills {
+            return createHierarchicalIcon(symbolName: symbolName, primaryColor: .labelColor, secondaryColor: .systemRed)
+        } else {
+            return createStandardIcon(symbolName: symbolName)
+        }
+    }
+    
+    private func createHierarchicalIcon(symbolName: String, primaryColor: NSColor, secondaryColor: NSColor) -> NSImage? {
+        let paletteConfig = NSImage.SymbolConfiguration(paletteColors: [primaryColor, secondaryColor])
+        let sizeConfig = NSImage.SymbolConfiguration(textStyle: .body, scale: .large)
+        let combinedConfig = sizeConfig.applying(paletteConfig)
+        
+        guard let image = NSImage(
+            systemSymbolName: symbolName,
+            accessibilityDescription: "Bills"
+        )?.withSymbolConfiguration(combinedConfig) else {
             return nil
         }
         
-        // Define canvas size
-        let size = baseImage.size
+        image.isTemplate = false
+        return image
+    }
+    
+    private func createStandardIcon(symbolName: String) -> NSImage? {
+        let config = NSImage.SymbolConfiguration(textStyle: .body, scale: .large)
         
-        let image = NSImage(size: size, flipped: false) { rect in
-            baseImage.draw(in: rect)
-            NSColor.labelColor.set()
-            rect.fill(using: .sourceIn)
-            let badgeSize: CGFloat = 9.0
-            let x = size.width - badgeSize - 1
-            let y = 0.0
-            let badgeRect = NSRect(x: x, y: y, width: badgeSize, height: badgeSize)
-            
-            if urgent {
-                NSColor.systemOrange.set()
-                let path = NSBezierPath(ovalIn: badgeRect)
-                path.fill()
-            } else {
-                if let clockImage = NSImage(systemSymbolName: "clock.fill", accessibilityDescription: nil) {
-                    let clockConfig = NSImage.SymbolConfiguration(pointSize: 16, weight: .bold)
-                    if let styledClock = clockImage.withSymbolConfiguration(clockConfig) {
-                        styledClock.draw(in: badgeRect)
-                        NSColor.labelColor.set()
-                        badgeRect.fill(using: .sourceIn)
-                    }
-                }
-            }
-            return true
+        guard let image = NSImage(
+            systemSymbolName: symbolName,
+            accessibilityDescription: "Bills"
+        )?.withSymbolConfiguration(config) else {
+            return nil
         }
         
-        image.isTemplate = false
+        image.isTemplate = true
         return image
     }
 }
