@@ -23,6 +23,7 @@ struct BillsPopoverView: View {
 
             for w in NSApp.windows where w.isVisible {
                 w.makeKeyAndOrderFront(nil)
+                w.level = .floating
             }
         }
     }

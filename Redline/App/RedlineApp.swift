@@ -38,55 +38,23 @@ struct RedlineApp: App {
     
     @ViewBuilder
     private var menuBarLabel: some View {
-        if let icon = createMenuBarIcon() {
-            Image(nsImage: icon)
-        } else {
-            // Fallback to system image
-            Image(systemName: "polishzlotysign.arrow.trianglehead.counterclockwise.rotate.90")
-                .foregroundColor(store.hasUrgentBills ? .red : .primary)
-        }
+        Image(nsImage: createMenuBarIcon())
     }
     
     // MARK: - Icon Generation
     
-    private func createMenuBarIcon() -> NSImage? {
-        let symbolName = "polishzlotysign.arrow.trianglehead.counterclockwise.rotate.90"
-        
-        // Use hierarchical rendering for two-tone coloring
-        if store.hasUrgentBills {
-            return createHierarchicalIcon(symbolName: symbolName, primaryColor: .labelColor, secondaryColor: .systemRed)
-        } else {
-            return createStandardIcon(symbolName: symbolName)
-        }
-    }
-    
-    private func createHierarchicalIcon(symbolName: String, primaryColor: NSColor, secondaryColor: NSColor) -> NSImage? {
-        let paletteConfig = NSImage.SymbolConfiguration(paletteColors: [primaryColor, secondaryColor])
-        let sizeConfig = NSImage.SymbolConfiguration(textStyle: .body, scale: .large)
-        let combinedConfig = sizeConfig.applying(paletteConfig)
-        
-        guard let image = NSImage(
-            systemSymbolName: symbolName,
-            accessibilityDescription: "Bills"
-        )?.withSymbolConfiguration(combinedConfig) else {
-            return nil
-        }
-        
+    private func createMenuBarIcon() -> NSImage {
+        let symbolName = "polishzlotysign.circle.fill"
+        let cleanRed = NSColor(red: 0.93, green: 0.26, blue: 0.31, alpha: 1.0)
+        let cleanGreen = NSColor(red: 0.16, green: 0.75, blue: 0.47, alpha: 1.0)
+        let color = store.hasUrgentBills ? cleanRed : cleanGreen
+
+        let config = NSImage.SymbolConfiguration(pointSize: 18, weight: .regular)
+            .applying(.init(paletteColors: [.white, color]))
+
+        let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: "Bills")?
+            .withSymbolConfiguration(config) ?? NSImage()
         image.isTemplate = false
-        return image
-    }
-    
-    private func createStandardIcon(symbolName: String) -> NSImage? {
-        let config = NSImage.SymbolConfiguration(textStyle: .body, scale: .large)
-        
-        guard let image = NSImage(
-            systemSymbolName: symbolName,
-            accessibilityDescription: "Bills"
-        )?.withSymbolConfiguration(config) else {
-            return nil
-        }
-        
-        image.isTemplate = true
         return image
     }
 }

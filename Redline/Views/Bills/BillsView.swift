@@ -44,6 +44,13 @@ struct BillsView: View {
             }
             .environmentObject(store)
         }
+        .onAppear {
+            DispatchQueue.main.async {
+                for w in NSApp.windows where w.isVisible {
+                    w.level = .floating
+                }
+            }
+        }
     }
 
     // MARK: - Sorting

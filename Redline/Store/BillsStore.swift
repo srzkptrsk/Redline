@@ -1,4 +1,4 @@
-import Foundation
+@preconcurrency import Foundation
 import Combine
 
 @MainActor
@@ -173,3 +173,4 @@ extension BillsStore {
         statuses.removeAll { $0.templateId == id }
     }
 }
+
